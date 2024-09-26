@@ -1,0 +1,103 @@
+<template>
+    <div style="margin-top: 30px;">
+        <canvas id="funnelChart"></canvas>
+    </div>
+</template>
+
+<script>
+import { Chart, LinearScale, CategoryScale } from 'chart.js';
+import { FunnelController, TrapezoidElement } from 'chartjs-chart-funnel';
+
+Chart.register(FunnelController, TrapezoidElement, LinearScale, CategoryScale);
+
+export default {
+    name: 'DashboardFunnelChart',
+
+    data() {
+        return {
+            chartInstance: null,
+        };
+    },
+  
+    mounted() {
+        this.createChart();
+    },
+
+    methods: {
+        createChart() {
+            const ctx = document.getElementById('funnelChart').getContext('2d');
+            if (this.chartInstance) {
+                this.chartInstance.destroy();
+            }
+
+            this.chartInstance = new Chart(ctx, {
+                type: 'funnel',
+                data: {
+                    labels: ['Step 1', 'Step 2', 'Step 3', 'Step 4'],
+                    datasets: [
+                        {
+                            label: 'Conversion Rate',
+                            data: [0.7, 0.56, 0.31, 0.15],
+                            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
+                        },
+                    ],  
+                },             
+                options: {  
+                    indexAxis: 'y',
+                    responsive: true,        
+                    plugins: {       
+                        legend: {    
+                            display: true,   
+                            position: 'bottom',      
+                        },  
+                        tooltip: {    
+                            callbacks: {
+                                label: (context) => `${context.dataset.label}: ${context.raw}`,
+                            },
+                        },    
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'end',
+                            formatter: (value, context) => {
+                                return `${value * 100}%`;
+                            },
+                            color: 'white',
+                        },
+                    },
+                },   
+                plugins: [  
+                    { 
+                        afterDatasetsDraw: function (chart) {
+                            const ctx = chart.ctx;
+                            chart.data.datasets.forEach((dataset, i) => {
+                                const meta = chart.getDatasetMeta(i);
+                                if (!meta.hidden) {
+                                    meta.data.forEach((bar, index) => {
+                                        ctx.fillStyle = 'white';
+                                        const label = dataset.data[index] * 100;
+                                        ctx.fillText(label.toFixed(0) + '%', bar.x, bar.y);
+                                    });
+                                }
+                            });
+                        },
+                    },
+                ],
+            });
+        },
+    },
+
+    beforeDestroy() {
+
+        if (this.chartInstance) {
+            this.chartInstance.destroy();
+        }
+    },
+};
+</script>
+
+<style scoped>
+canvas {
+    max-width: 800px;
+    margin: 0 auto;
+}
+</style>
